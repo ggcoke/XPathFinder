@@ -8,8 +8,24 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class XPathEntity {
-	private @Getter @Setter String relativeXPath;
-	private @Getter @Setter int weight;
+	private String relativeXPath;
+	public String getRelativeXPath() {
+		return relativeXPath;
+	}
+
+	public void setRelativeXPath(String relativeXPath) {
+		this.relativeXPath = relativeXPath;
+	}
+
+	public int getWeight() {
+		return weight;
+	}
+
+	public void setWeight(int weight) {
+		this.weight = weight;
+	}
+
+	private int weight;
 	
 	public XPathEntity(String relativeXPath, int weight) {
 		this.relativeXPath = relativeXPath;

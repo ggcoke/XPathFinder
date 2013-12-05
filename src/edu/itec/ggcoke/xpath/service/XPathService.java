@@ -113,8 +113,8 @@ public class XPathService {
     }
     
     /**
-     * 通过关键词xpath数组和值xpath数组添加xpath，首先计算两组xpath之间距离最小的一对，
-     * 然后将这对xpath的相对路径添加到文件中
+     * 通过关键词xpath数组和值xpath数组添加xpath，<br/>
+     * 首先计算两组xpath之间距离最小的一对，然后将这对xpath的相对路径添加到文件中
      * @param src
      * @param comp
      */
@@ -185,10 +185,7 @@ public class XPathService {
 		StringBuilder sb = new StringBuilder();
 		
 		while (doc != null) {
-			String fix = ":eq(" + getTagIndex(doc) + ")";
-			String tagName = doc.get(0).getNodeName();
-			// body后面不能加eq，否则xpath无效
-			arr.add(tagName + (tagName.equalsIgnoreCase("body") ? "" : fix));
+			arr.add(doc.get(0).getNodeName() + ":eq(" + getTagIndex(doc) + ")");
 			if (doc.get().length > 0) {
 				if (!doc.get(0).getNodeName().equalsIgnoreCase("html")) {
 					doc = doc.parent();
@@ -221,6 +218,8 @@ public class XPathService {
 				if (children[i].getNodeType().equals(Node.NodeType.ELEMENT) && children[i].equals(currentNode)) {
 					return index;
 				}
+				
+				// 此处需注意，不需要相同的tag时index才递增，而是统计所有的tag
 				index++;
 			}
 		}
@@ -233,7 +232,7 @@ public class XPathService {
      * @param key 关键字
      * @return
      */
-    public List<String> getXPath(String url, String key) {
+    public List<String> getKXPath(String url, String key) {
     	List<String> xpaths = new ArrayList<String>();
     	String content = PageContentService.getKPageContent(url, key);
     	Jerry doc = Jerry.jerry(content);
@@ -254,6 +253,7 @@ public class XPathService {
      */
     public void getKVXPath(String url, String key, String value, List<String> keyXPathList, List<String> valueXPathList) {
     	String content = PageContentService.getPageContent(url, key, value);
+//    	System.out.println(content);
     	Jerry doc = Jerry.jerry(content);
     	for (Jerry jerry : doc.$("span[rel='mark_key']")) {
     		keyXPathList.add(getXPathCore(jerry));
@@ -264,9 +264,15 @@ public class XPathService {
     	}
     }
     
-    public List<String> getContent(String url, String xpath) {
+    /**
+     * 根据网页url和目标xpath获取内容
+     * @param url
+     * @param xpath
+     * @return
+     */
+    private List<String> getContentCore(Document doc, String xpath) {
     	List<String> contents = new ArrayList<String>();
-    	Document doc = Jsoup.parse(PageContentService.getPageContent(url));
+    	
 		Elements elems = doc.select(xpath);
 		for (Element element : elems) {
 			contents.add(element.text());
@@ -274,20 +280,65 @@ public class XPathService {
 		return contents;
     }
     
-    public static void main(String[] args) {
-    	String url = "http://baike.baidu.com/view/27781.htm";
-    	String key = "辽宁、吉林、内蒙古、河北、山西、河南西北部及陕西等省区";
-    	String value = "分布区域";
-    	XPathService service = new XPathService();
-//    	String content = PageContentService.getPageContent(url, key, value);
-//    	System.out.println(Jsoup.parse(PageContentService.getPageContent(url, key, value)));
-    	List<String> srcXPathes = new ArrayList<String>();
-    	List<String> destXPathes = new ArrayList<String>();
-    	service.getKVXPath(url, key, value, srcXPathes, destXPathes);
-    	System.out.println("KEY: " + srcXPathes.toString());
-    	System.out.println("DEST: " + destXPathes.toString());
-//    	String xpath = "html>body>div>div:eq(3)>div>div:eq(1)>div>div:eq(2)>div>div>div>div:eq(7)>dl>dd>div:eq(0)";
-    	List<String> results = service.getContent(url, srcXPathes.get(0));
-    	System.out.println(results);
+    private List<XPathEntity> getRelativeXPath() {
+    	List<XPathEntity> xpaths = new ArrayList<XPathEntity>();
+    	String line = "";
+    	BufferedReader br = null;
+    	try {
+			br = new BufferedReader(new InputStreamReader(
+							new FileInputStream(new File(XPathConstant.XPATH_LIST))));
+			while ((line = br.readLine()) != null) {
+				if (!line.startsWith("#")) {
+					String xpath = line.split("\t")[0];
+					int weight = Integer.parseInt(line.split("\t")[1]);
+					XPathEntity entity = new XPathEntity(xpath, weight);
+					xpaths.add(entity);
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+    	
+    	return xpaths;
     }
+    
+    public List<String> getTargetContent(String url, String key) {
+    	List<String> result = new ArrayList<String>();
+    	List<XPathEntity> relativeXPathes = getRelativeXPath();
+    	List<String> srcXPathes = getKXPath(url, key);
+    	
+    	if (relativeXPathes == null || srcXPathes == null)
+    		return null;
+    	
+    	Document doc = Jsoup.parse(PageContentService.getPageContent(url));
+    	
+    	for (int i = 0; i < srcXPathes.size(); i++) {
+    		for (int j = 0; j < relativeXPathes.size(); j++) {
+    			String srcXPath = srcXPathes.get(i);
+    			String relativeXPath = relativeXPathes.get(j).getRelativeXPath();
+    			String targetXPath = XPathEntity.getDestXPath(srcXPath, relativeXPath);
+    			List<String> content = getContentCore(doc, targetXPath);
+    			if (content != null) {
+    				for (int k = 0; k < content.size(); k++) {
+    					result.add(content.get(k));
+    				}
+    			}
+    			
+    		}
+    	}
+    	
+    	return result;
+    }
+    
+    
 }

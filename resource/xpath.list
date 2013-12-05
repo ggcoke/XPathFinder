@@ -1,6 +1,8 @@
 # relativexpath weight
 # 文件内容为value相对于key的xpath的相对路径和权重(用tab分隔)
 # ..表示上一级dom
-# 例如 key的xpath为//html[1]/body[1]/div[3]/table[1]/tr[5]/td[3]
-#   value的xpath为//html[1]/body[1]/div[3]/div[5]/table[2]/tr[1]/td[6]
-# 则相对路径为 ../../../div[5]/table[2]/tr[1]/td[6]
+# 例如 key的xpath为html>body>div:eq(2)>table>tr:eq(4)>td:eq(2)
+#   value的xpath为html>body>div:eq(2)>div:eq(4)>table:eq(1)>tr>td:eq(5)
+# 则相对路径为 ../../../div:eq(4)/table:eq(1)/tr/td:eq(5)
+../div:eq(1)	1
+../../div:eq(4)	1
