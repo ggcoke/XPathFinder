@@ -344,8 +344,9 @@ public class XPathService {
     				for (int k = 0; k < content.size(); k++) {
     					result.add(content.get(k));
     				}
+    				// 只查找权重最大的相对xpath得到的结果
+    				break;
     			}
-    			
     		}
     	}
     	
