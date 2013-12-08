@@ -340,7 +340,7 @@ public class XPathService {
     			String relativeXPath = relativeXPathes.get(j).getRelativeXPath();
     			String targetXPath = XPathEntity.getDestXPath(srcXPath, relativeXPath);
     			List<String> content = getContentCore(doc, targetXPath);
-    			if (content != null) {
+    			if (content != null && content.size() > 0) {
     				for (int k = 0; k < content.size(); k++) {
     					result.add(content.get(k));
     				}
