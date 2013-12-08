@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.jsoup.Jsoup;
@@ -308,6 +310,16 @@ public class XPathService {
 				}
 			}
 		}
+    	
+    	// 将相对路径按照权重排序，有限选择权重大的进行爬取
+    	Collections.sort(xpaths, new Comparator<XPathEntity>() {
+
+			@Override
+			public int compare(XPathEntity xpath1, XPathEntity xpath2) {
+				return xpath2.getWeight() - xpath1.getWeight();
+			}
+    		
+		});
     	
     	return xpaths;
     }
