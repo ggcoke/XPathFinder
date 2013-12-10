@@ -14,15 +14,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import jodd.jerry.Jerry;
+import jodd.lagarto.dom.Node;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.NodeType;
-
-import jodd.jerry.Jerry;
-import jodd.lagarto.dom.Node;
 
 import edu.itec.ggcoke.xpath.entity.XPathEntity;
 import edu.itec.ggcoke.xpath.util.XPathConstant;
@@ -331,7 +329,6 @@ public class XPathService {
     	
     	if (relativeXPathes == null || srcXPathes == null)
     		return null;
-    	
     	Document doc = Jsoup.parse(PageContentService.getPageContent(url));
     	
     	for (int i = 0; i < srcXPathes.size(); i++) {
