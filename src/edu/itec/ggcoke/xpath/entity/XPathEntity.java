@@ -202,7 +202,7 @@ public class XPathEntity {
     }
 	
 	public static void main(String[] args) {
-		String src = "html:eq(0)>body:eq(1)>div:eq(0)>div:eq(3)>div:eq(0)>div:eq(0)>div:eq(0)>div:eq(0)>div:eq(0)>div:eq(8)>h2:eq(3)>span:eq(1)";
+		String src  = "html:eq(0)>body:eq(1)>div:eq(0)>div:eq(3)>div:eq(0)>div:eq(0)>div:eq(0)>div:eq(0)>div:eq(0)>div:eq(8)>h2:eq(3)>span:eq(1)";
 		String comp = "html:eq(0)>body:eq(1)>div:eq(0)>div:eq(3)>div:eq(0)>div:eq(0)>div:eq(0)>div:eq(0)>div:eq(0)>div:eq(8)>div:eq(14)";
 		
 		String relative = getRelativeBetweenXPath(src, comp);

@@ -139,6 +139,7 @@ public class XPathService {
     	for (int i = 0; i < src.size(); i++) {
     		for (int j = 0; j < comp.size(); j++) {
     			int tmpSteps = XPathEntity.getStepsBetweenXPath(src.get(i), comp.get(j));
+    			if (tmpSteps == 0) continue;
     			if (tmpSteps < minSteps) {
     				minScr = src.get(i);
     				minComp = comp.get(j);
