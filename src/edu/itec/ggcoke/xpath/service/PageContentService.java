@@ -32,7 +32,7 @@ public class PageContentService {
 		String content = getPageContent(siteUrl);
 		// 替换关键字
 		content = content.replaceAll(key, "<span rel='mark_key'>" + key + "</span>");
-		
+//		System.out.println(content);
 		return content;
 	}
 	
@@ -40,7 +40,7 @@ public class PageContentService {
 		String content = getPageContent(siteUrl);
 		// 替换关键字
 		content = content.replaceAll(value, "<span rel='mark_value'>" + value + "</span>");
-		
+//		System.out.println(content);
 		return content;
 	}
 	
@@ -77,7 +77,6 @@ public class PageContentService {
 		// 百科中很多内容都有超链接，影响关键词替换，因此需要将a标签去掉
 		content = content.replaceAll("<a [^>]*+>", "");
 		content = content.replaceAll("</a>", "");
-		
 		return content;
 	}
 	

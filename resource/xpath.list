@@ -1,4 +1,4 @@
-# relativexpath weight
+# domain	relativexpath	weight
 # 文件内容为value相对于key的xpath的相对路径和权重(用tab分隔)
 # ..表示上一级dom
 # 在一个公共祖父节点的第一级子节点处eq中数字为value-key的值，是一个相对值，后面的为绝对值
@@ -9,4 +9,4 @@
 # 例如 key的xpath为html:eq(0)>body:eq(1)>div:eq(0)>div:eq(3)>div:eq(8)>h2:eq(6)>span:eq(1)
 #   value的xpath为html:eq(0)>body:eq(1)>div:eq(0)>div:eq(3)>div:eq(8)>div:eq(1)>div:eq(2)
 # 则相对路径为 ../../../div:eq(-5)>div:eq(2)
-../../div:eq(1)	1
+baike.baidu.com	../../div:eq(1)	1

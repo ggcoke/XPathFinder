@@ -9,6 +9,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,7 +21,6 @@ import jodd.lagarto.dom.Node;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import edu.itec.ggcoke.xpath.entity.XPathEntity;
@@ -31,8 +32,8 @@ public class XPathService {
 	 * 添加新的xpath记录 ，默认权重为 {@link edu.itec.ggcoke.util.XPathConstant.XPATH_WEIGHT_DEFAULT}
 	 * @param xpath
 	 */
-    public void addXPath(String xpath) {
-    	addXPath(xpath, XPathConstant.XPATH_WEIGHT_DEFAULT);
+    public void addXPath(String url, String xpath) {
+    	addXPath(url, xpath, XPathConstant.XPATH_WEIGHT_DEFAULT);
     }
     
     /**
@@ -40,8 +41,8 @@ public class XPathService {
      * @param xpath
      * @param weight
      */
-    public void addXPath(String xpath, int weight) {
-    	updateXPathWeight(xpath, weight);
+    public void addXPath(String url, String xpath, int weight) {
+    	updateXPathWeight(url, xpath, weight);
     }
     
     /**
@@ -49,23 +50,33 @@ public class XPathService {
      * @param xpath
      * @param weight
      */
-    public void updateXPathWeight(String xpath, int weight) {
+    public void updateXPathWeight(String url, String xpath, int weight) {
     	BufferedReader br = null;
     	BufferedWriter bw = null;
     	String line = "";
     	StringBuilder sb = new StringBuilder();
     	boolean exist = false;
+    	String domain = "";
+    	try {
+			domain = new URL(url).getHost();
+		} catch (MalformedURLException e1) {
+		}
     	
     	try {
     		br = new BufferedReader(new InputStreamReader(
 					new FileInputStream(new File(XPathConstant.XPATH_LIST))));
-    		while ((line = br.readLine()) != null) {
-    			String tmpXPath = line.split("\t")[0];
-    			if (!tmpXPath.startsWith("#") && tmpXPath.equalsIgnoreCase(xpath)){
-    				sb.append(xpath + "\t" + weight + "\r\n");
-    				exist = true;
-    			} else {
+    		while ((line = br.readLine()) != null && line.length() > 0) {
+    			if (line.startsWith("#")) {
     				sb.append(line+"\r\n");
+    			} else {
+    				String tmpDomain = line.split("\t")[0];
+        			String tmpXPath = line.split("\t")[1];
+        			if (tmpXPath.equalsIgnoreCase(xpath) && tmpDomain.equalsIgnoreCase(domain)){
+        				sb.append(domain + "\t" + xpath + "\t" + weight + "\r\n");
+        				exist = true;
+        			} else {
+        				sb.append(line+"\r\n");
+        			}
     			}
     		}
     		
@@ -85,7 +96,7 @@ public class XPathService {
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(XPathConstant.XPATH_LIST))));
 			bw.write(sb.toString());
 			if (!exist) {
-				bw.write(xpath + "\t" + weight + "\r\n");
+				bw.write(domain + "\t" + xpath + "\t" + weight + "\r\n");
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -107,9 +118,9 @@ public class XPathService {
      * @param src
      * @param comp
      */
-    public void addXPath(String src, String comp) {
+    public void addXPath(String url, String src, String comp) {
     	String relativeXPath = XPathEntity.getRelativeBetweenXPath(src, comp);
-    	this.addXPath(relativeXPath);
+    	this.addXPath(url, relativeXPath);
     }
     
     /**
@@ -118,7 +129,7 @@ public class XPathService {
      * @param src
      * @param comp
      */
-    public void addXPath(List<String> src, List<String> comp) {
+    public void addXPath(String url, List<String> src, List<String> comp) {
     	String minScr = "";
     	String minComp = "";
     	int minSteps = Integer.MAX_VALUE;
@@ -136,42 +147,7 @@ public class XPathService {
     		}
     	}
     	
-    	addXPath(minScr, minComp);
-    }
-    
-    /**
-     * XPath是否已经存在
-     * @param xpath
-     * @return
-     */
-    public static boolean XPathExist(String xpath) {
-    	String line = "";
-    	BufferedReader br = null;
-    	try {
-			br = new BufferedReader(new InputStreamReader(
-							new FileInputStream(new File(XPathConstant.XPATH_LIST))));
-			while ((line = br.readLine()) != null) {
-				String tmpXPath = line.split("\t")[0];
-				if (tmpXPath.startsWith("#"))
-					continue;
-				if (tmpXPath.equals(xpath))
-					return true;
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		
-		return false;
+    	addXPath(url, minScr, minComp);
     }
     
     /**
@@ -237,6 +213,7 @@ public class XPathService {
     	String content = PageContentService.getKPageContent(url, key);
     	Jerry doc = Jerry.jerry(content);
     	for (Jerry jerry : doc.$("span[rel='mark_key']")) {
+    		String c = jerry.text();
     		xpaths.add(getXPathCore(jerry));
 		}
     	
@@ -252,13 +229,14 @@ public class XPathService {
      * @param valueXPathList
      */
     public void getKVXPath(String url, String key, String value, List<String> keyXPathList, List<String> valueXPathList) {
-    	String content = PageContentService.getPageContent(url, key, value);
-//    	System.out.println(content);
+    	String content = PageContentService.getKPageContent(url, key);
     	Jerry doc = Jerry.jerry(content);
     	for (Jerry jerry : doc.$("span[rel='mark_key']")) {
     		keyXPathList.add(getXPathCore(jerry));
 		}
     	
+    	content = PageContentService.getVPageContent(url, value);
+    	doc = Jerry.jerry(content);
     	for (Jerry jerry : doc.$("span[rel='mark_value']")) {
     		valueXPathList.add(getXPathCore(jerry));
     	}
@@ -270,18 +248,19 @@ public class XPathService {
      * @param xpath
      * @return
      */
-    private List<String> getContentCore(Document doc, String xpath) {
-    	List<String> contents = new ArrayList<String>();
-    	
+    private String getContentCore(Document doc, String xpath) {
 		Elements elems = doc.select(xpath);
-		for (Element element : elems) {
-			contents.add(element.text());
-		}
-		return contents;
+		return ((elems == null || elems.size() <= 0) ? "" : elems.get(0).text());
     }
     
-    private List<XPathEntity> getRelativeXPath() {
-    	List<XPathEntity> xpaths = new ArrayList<XPathEntity>();
+    /**
+     * 获取相对xpath list，首先根据domain分类，跟target domain相同的有限查找，然后以权重排序
+     * @param domain
+     * @return
+     */
+    private List<XPathEntity> getRelativeXPath(String domain) {
+    	List<XPathEntity> sameDomainXPaths = new ArrayList<XPathEntity>();
+    	List<XPathEntity> otherDomainXPaths = new ArrayList<XPathEntity>();
     	String line = "";
     	BufferedReader br = null;
     	try {
@@ -289,10 +268,16 @@ public class XPathService {
 							new FileInputStream(new File(XPathConstant.XPATH_LIST))));
 			while ((line = br.readLine()) != null) {
 				if (!line.startsWith("#")) {
-					String xpath = line.split("\t")[0];
-					int weight = Integer.parseInt(line.split("\t")[1]);
-					XPathEntity entity = new XPathEntity(xpath, weight);
-					xpaths.add(entity);
+					String[] infos = line.split("\t");
+					if (infos == null || infos.length != 3) {
+						continue;
+					}
+					XPathEntity entity = new XPathEntity(infos[0], infos[1], Integer.parseInt(infos[2]));
+					if (infos[0].equalsIgnoreCase(domain)) {
+						sameDomainXPaths.add(entity);
+					} else {
+						otherDomainXPaths.add(entity);
+					}
 				}
 			}
 		} catch (FileNotFoundException e) {
@@ -309,8 +294,8 @@ public class XPathService {
 			}
 		}
     	
-    	// 将相对路径按照权重排序，有限选择权重大的进行爬取
-    	Collections.sort(xpaths, new Comparator<XPathEntity>() {
+    	// 将相对路径按照权重排序，优先选择权重大的进行爬取
+    	Collections.sort(sameDomainXPaths, new Comparator<XPathEntity>() {
 
 			@Override
 			public int compare(XPathEntity xpath1, XPathEntity xpath2) {
@@ -319,29 +304,48 @@ public class XPathService {
     		
 		});
     	
-    	return xpaths;
+    	Collections.sort(otherDomainXPaths, new Comparator<XPathEntity>() {
+
+			@Override
+			public int compare(XPathEntity xpath1, XPathEntity xpath2) {
+				return xpath2.getWeight() - xpath1.getWeight();
+			}
+    		
+		});
+    	
+    	sameDomainXPaths.addAll(otherDomainXPaths);
+    	
+    	return sameDomainXPaths;
     }
     
     public List<String> getTargetContent(String url, String key) {
     	List<String> result = new ArrayList<String>();
-    	List<XPathEntity> relativeXPathes = getRelativeXPath();
+    	String domain = "";
+    	try {
+    		domain = new URL(url).getHost();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+    	
+    	List<XPathEntity> relativeXPathes = getRelativeXPath(domain);
     	List<String> srcXPathes = getKXPath(url, key);
     	
     	if (relativeXPathes == null || srcXPathes == null)
     		return null;
     	Document doc = Jsoup.parse(PageContentService.getPageContent(url));
     	
+    	// 对关键字按照匹配度排序
+    	Compare compare = new Compare(doc);
+    	Collections.sort(srcXPathes, compare);
+
     	for (int i = 0; i < srcXPathes.size(); i++) {
     		for (int j = 0; j < relativeXPathes.size(); j++) {
     			String srcXPath = srcXPathes.get(i);
     			String relativeXPath = relativeXPathes.get(j).getRelativeXPath();
     			String targetXPath = XPathEntity.getDestXPath(srcXPath, relativeXPath);
-    			List<String> content = getContentCore(doc, targetXPath);
-    			if (content != null && content.size() > 0) {
-    				for (int k = 0; k < content.size(); k++) {
-    					result.add(content.get(k));
-    				}
-    				// 只查找权重最大的相对xpath得到的结果
+    			String content = getContentCore(doc, targetXPath);
+    			if (content != null && content.length() > 0) {
+    				result.add(content);
     				break;
     			}
     		}
@@ -350,5 +354,17 @@ public class XPathService {
     	return result;
     }
     
-    
+    // 关键字匹配度排序算法，按照文字长度
+    private class Compare implements Comparator<String>{
+    	private Document doc;
+    	public Compare(Document doc) {
+    		this.doc = doc;
+    	}
+    	
+		@Override
+		public int compare(String o1, String o2) {
+			return getContentCore(doc, o1).length() - getContentCore(doc, o2).length();
+		}
+    	
+    }
 }

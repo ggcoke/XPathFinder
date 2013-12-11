@@ -11,6 +11,15 @@ import lombok.Setter;
 
 public class XPathEntity {
 	private String relativeXPath;
+	private String domain;
+	private int weight;
+	
+	public XPathEntity(String domain, String relativeXPath, int weight) {
+		this.domain = domain;
+		this.relativeXPath = relativeXPath;
+		this.weight = weight;
+	}
+	
 	public String getRelativeXPath() {
 		return relativeXPath;
 	}
@@ -26,12 +35,13 @@ public class XPathEntity {
 	public void setWeight(int weight) {
 		this.weight = weight;
 	}
-
-	private int weight;
 	
-	public XPathEntity(String relativeXPath, int weight) {
-		this.relativeXPath = relativeXPath;
-		this.weight = weight;
+	public String getDomain() {
+		return this.domain;
+	}
+	
+	public void setDomain(String domain) {
+		this.domain = domain;
 	}
 	
 	/**
@@ -88,9 +98,22 @@ public class XPathEntity {
 			compList.remove(0);
 		}
 		
-		// 其中一个路径已经为空，这种情况一般不会出现
-		if (srcList == null || srcList.size() == 0 || compList == null || compList.size() == 0) {
-			return null;
+		// key是value的父节点
+		if (srcList.size() <= 0) {
+			sb.append("./");
+			while (compList.size() > 0) {
+				sb.append(compList.remove(0)).append("/");
+			}
+			return sb.toString().substring(0, sb.toString().length() - 1);
+		}
+		
+		// value是 key的父节点
+		if (compList.size() <= 0) {
+			while (srcList.size() > 0) {
+				sb.append("../");
+				srcList.remove(0);
+			}
+			return sb.toString().substring(0, sb.toString().length() - 1);
 		}
 		
 		// 计算第一级不同节点的相对距离
@@ -138,7 +161,8 @@ public class XPathEntity {
     	StringBuilder sb = new StringBuilder();
     	List<String> srcList = new ArrayList(Arrays.asList(src.split(">")));
 		List<String> relativeList = new ArrayList(Arrays.asList(relative.split("/")));
-		boolean firstChild = true;
+		boolean isChild = false;    // 源key和value直接是否是父子关系
+		boolean firstChild = true;    // 判断最近公共父节点的子节点
     	String lastSrc = srcList.get(0);
 		
 		for (int i = 0; i < relativeList.size(); i++) {
@@ -150,9 +174,11 @@ public class XPathEntity {
 				} else {
 					return null;
 				}
+			} else if (tmp.equals(".")) {
+				isChild = true;
 			} else {
-				if (firstChild) {
-					// 第一个子节点，需要根据相对路径的相对距离进行计算
+				if (firstChild && !isChild) {
+					// 不包含父子关系的第一个子节点，需要根据相对路径的相对距离进行计算
 					Pattern pattern = Pattern.compile("eq\\(([-]?\\d+)\\)");
 					Matcher m1 = pattern.matcher(lastSrc);
 					Matcher m2 = pattern.matcher(tmp);
