@@ -27,22 +27,14 @@ import edu.itec.ggcoke.xpath.entity.XPathEntity;
 import edu.itec.ggcoke.xpath.util.XPathConstant;
 
 public class XPathService {
-	
-	/**
-	 * 添加新的xpath记录 ，默认权重为 {@link edu.itec.ggcoke.util.XPathConstant.XPATH_WEIGHT_DEFAULT}
-	 * @param xpath
-	 */
-    public void addXPath(String url, String xpath) {
-    	addXPath(url, xpath, XPathConstant.XPATH_WEIGHT_DEFAULT);
-    }
-    
     /**
-     * 添加新的带权重的xpath记录
+     * 添加新的xpath记录 ，默认权重为 {@link edu.itec.ggcoke.util.XPathConstant.XPATH_WEIGHT_DEFAULT}<br/>
+     * 如果存在，则权重+1
      * @param xpath
      * @param weight
      */
-    public void addXPath(String url, String xpath, int weight) {
-    	updateXPathWeight(url, xpath, weight);
+    public void addXPath(String url, String xpath) {
+    	updateXPathWeight(url, xpath);
     }
     
     /**
@@ -50,7 +42,7 @@ public class XPathService {
      * @param xpath
      * @param weight
      */
-    public void updateXPathWeight(String url, String xpath, int weight) {
+    public void updateXPathWeight(String url, String xpath) {
     	BufferedReader br = null;
     	BufferedWriter bw = null;
     	String line = "";
@@ -71,8 +63,9 @@ public class XPathService {
     			} else {
     				String tmpDomain = line.split("\t")[0];
         			String tmpXPath = line.split("\t")[1];
+        			int weight = Integer.parseInt(line.split("\t")[2]);
         			if (tmpXPath.equalsIgnoreCase(xpath) && tmpDomain.equalsIgnoreCase(domain)){
-        				sb.append(domain + "\t" + xpath + "\t" + weight + "\r\n");
+        				sb.append(domain + "\t" + xpath + "\t" + (weight+1) + "\r\n");
         				exist = true;
         			} else {
         				sb.append(line+"\r\n");
@@ -96,7 +89,7 @@ public class XPathService {
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(XPathConstant.XPATH_LIST))));
 			bw.write(sb.toString());
 			if (!exist) {
-				bw.write(domain + "\t" + xpath + "\t" + weight + "\r\n");
+				bw.write(domain + "\t" + xpath + "\t" + XPathConstant.XPATH_WEIGHT_DEFAULT + "\r\n");
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
