@@ -1,4 +1,4 @@
-import java.util.ArrayList;
+﻿import java.util.ArrayList;
 import java.util.List;
 
 import edu.itec.ggcoke.xpath.service.XPathService;
@@ -23,11 +23,10 @@ public class Test {
     	// 添加相对xpath到文件
     	service.addXPath(url, srcXPathes, destXPathes);
     	
-    	// 根据url和key获取value值
+    	// 根据urlhe 和key获取value值
     	String targetKey = "功效";
     	List<String> result = service.getTargetContent(url, targetKey);
     	for (String content : result) {
-    		System.out.println(content);
-    	}
+    		System.out.println(content);    	}
     }
 }
